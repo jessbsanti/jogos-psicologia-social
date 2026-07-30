@@ -1,0 +1,73 @@
+{{ block title }}Rodada {{ player.round_number }} de {{ C.NUM_ROUNDS }}{{ endblock }}
+
+{{ block content }}
+<div style="font-size: 1.3rem; margin-bottom: 18px;">
+    Tempo restante: <strong><span id="countdown">{{ remaining_seconds }}</span> segundos</strong>
+</div>
+
+<p><strong>{{ question_text }}</strong></p>
+
+<div>
+    {{ for option in options }}
+        <label style="display:block; margin: 12px 0;">
+            <input type="radio" name="choice" value="{{ option }}" required>
+            {{ option }}
+        </label>
+    {{ endfor }}
+</div>
+
+<input type="hidden" name="submission_status" id="submission_status" value="">
+
+<button type="submit" id="confirm-button" class="otree-btn-next btn btn-primary">Confirmar</button>
+
+<script>
+    const form = document.querySelector('form');
+    const countdownElement = document.getElementById('countdown');
+    const submissionStatus = document.getElementById('submission_status');
+    const confirmButton = document.getElementById('confirm-button');
+    const initialRemainingSeconds = Number('{{ remaining_seconds }}');
+    const pageOpenedAt = performance.now();
+    let submitted = false;
+
+    // Somente um clique explícito em "Confirmar" transforma a marcação em resposta.
+    confirmButton.addEventListener('click', function () {
+        submissionStatus.value = 'confirmed';
+    });
+
+    function submitAsTimeout() {
+        if (submitted) return;
+        submitted = true;
+
+        // A alternativa pode estar visualmente marcada, mas não foi confirmada.
+        // Por isso, ela é removida antes do envio automático por timeout.
+        submissionStatus.value = 'timeout';
+        form.querySelectorAll('input[name="choice"]').forEach(function (input) {
+            input.checked = false;
+            input.required = false;
+        });
+        form.submit();
+    }
+
+    function updateCountdown() {
+        const elapsedOnPage = (performance.now() - pageOpenedAt) / 1000;
+        const remaining = Math.max(0, initialRemainingSeconds - elapsedOnPage);
+        countdownElement.textContent = Math.ceil(remaining);
+
+        if (remaining <= 0) {
+            submitAsTimeout();
+        }
+    }
+
+    form.addEventListener('submit', function (event) {
+        if (submissionStatus.value !== 'confirmed') {
+            // Evita que Enter ou outro envio indireto conte como confirmação.
+            event.preventDefault();
+            return;
+        }
+        submitted = true;
+    });
+
+    updateCountdown();
+    window.setInterval(updateCountdown, 100);
+</script>
+{{ endblock }}
