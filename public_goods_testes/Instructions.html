@@ -1,0 +1,44 @@
+{{ block title }}
+Instruções
+{{ endblock }}
+
+{{ block content }}
+
+<p>
+    Você participará de um jogo com
+    <strong>{{ C.PLAYERS_PER_GROUP }} participantes</strong>.
+</p>
+
+<p>
+    O jogo terá <strong>{{ C.NUM_ROUNDS }} rodadas</strong>.
+</p>
+
+<p>
+    Em cada rodada, cada participante receberá inicialmente
+    <strong>{{ C.ENDOWMENT }}</strong>.
+</p>
+
+<p>
+    Você deverá decidir quantos pontos deseja enviar ao fundo comum.
+    Você poderá contribuir com qualquer valor entre
+    <strong>0</strong> e <strong>{{ C.ENDOWMENT }}</strong>.
+</p>
+
+<p>
+    Depois que todos os participantes fizerem suas escolhas,
+    as contribuições serão somadas. O total será multiplicado por
+    <strong>{{ C.MULTIPLIER }}</strong> e dividido igualmente entre
+    todos os participantes, independentemente de quanto cada pessoa
+    contribuiu.
+</p>
+
+<p>
+    Seu resultado em cada rodada será formado pelos pontos que você
+    manteve, somados à sua parcela do fundo comum.
+</p>
+
+<button class="otree-btn-next btn btn-primary">
+    Iniciar o jogo
+</button>
+
+{{ endblock }}

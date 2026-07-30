@@ -1,0 +1,20 @@
+{{ block content }}
+
+<p>
+    Nesta rodada, você recebeu {{ C.ENDOWMENT }}.
+</p>
+
+<p>
+    Os pontos enviados ao fundo comum serão somados e
+    multiplicados por {{ C.MULTIPLIER }}.
+    O resultado será dividido igualmente entre os
+    {{ C.PLAYERS_PER_GROUP }} participantes.
+</p>
+
+{{ formfields }}
+
+<button class="otree-btn-next btn btn-primary">
+    Confirmar contribuição
+</button>
+
+{{ endblock }}

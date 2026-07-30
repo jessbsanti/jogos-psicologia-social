@@ -1,0 +1,58 @@
+{{ block title }}
+    Resultado da rodada {{ player.round_number }}
+{{ endblock }}
+
+
+{{ block content }}
+
+<table class="table">
+    <tr>
+        <th>Sua dotação inicial</th>
+        <td>{{ C.ENDOWMENT }}</td>
+    </tr>
+
+    <tr>
+        <th>Sua contribuição</th>
+        <td>{{ player.contribution }}</td>
+    </tr>
+
+    <tr>
+        <th>Contribuição total do grupo</th>
+        <td>{{ group.total_contribution }}</td>
+    </tr>
+
+    <tr>
+        <th>Parcela recebida por participante</th>
+        <td>{{ group.individual_share }}</td>
+    </tr>
+
+    <tr>
+        <th>Seu resultado nesta rodada</th>
+        <td><strong>{{ player.payoff }}</strong></td>
+    </tr>
+</table>
+
+
+{{ if player.round_number < C.NUM_ROUNDS }}
+
+<p>
+    Clique abaixo para prosseguir para a próxima rodada.
+</p>
+
+<button class="btn btn-primary">
+    Próxima rodada
+</button>
+
+{{ else }}
+
+<p>
+    Esta foi a última rodada do experimento.
+</p>
+
+<button class="btn btn-primary">
+    Finalizar
+</button>
+
+{{ endif }}
+
+{{ endblock }}
