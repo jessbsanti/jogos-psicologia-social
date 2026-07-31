@@ -1,9 +1,12 @@
 import time
 from otree.api import *
+from .categorias.objetos import QUESTIONS as OBJETOS
+from .categorias.dilemas import QUESTIONS as DILEMAS
 
 
 doc = """
 Jogo mínimo de consenso para grupos fechados de participantes.
+Objetivo: entrar em consenso e enviar a mesma resposta antes que acabe o tempo.
 Os participantes entram por código de grupo, respondem a 10 rodadas sincronizadas
 e recebem um resumo final com download dos dados do próprio grupo.
 """
@@ -14,49 +17,6 @@ class C(BaseConstants):
     PLAYERS_PER_GROUP = None
     NUM_ROUNDS = 10
     ROUND_TIME_SECONDS = 30
-
-    QUESTIONS = [
-        {
-            'question': 'Escolha um objeto:',
-            'options': ['Martelo', 'Garfo', 'Chave', 'Escova'],
-        },
-        {
-            'question': 'Escolha um objeto:',
-            'options': ['Guarda-chuva', 'Lanterna', 'Mochila', 'Relógio'],
-        },
-        {
-            'question': 'Escolha um objeto:',
-            'options': ['Tesoura', 'Panela', 'Toalha', 'Cadeado'],
-        },
-        {
-            'question': 'Escolha um objeto:',
-            'options': ['Copo', 'Almofada', 'Régua', 'Balde'],
-        },
-        {
-            'question': 'Escolha um objeto:',
-            'options': ['Estojo', 'Garrafa', 'Caderno', 'Boné'],
-        },
-        {
-            'question': 'Escolha um objeto:',
-            'options': ['Aspirador', 'Ventilador', 'Liquidificador', 'Ferro de passar'],
-        },
-        {
-            'question': 'Escolha um objeto:',
-            'options': ['Vela', 'Corda', 'Cadeira', 'Espelho'],
-        },
-        {
-            'question': 'Escolha um objeto:',
-            'options': ['Alicate', 'Furadeira', 'Trena', 'Serrote'],
-        },
-        {
-            'question': 'Escolha um objeto:',
-            'options': ['Bola', 'Trave', 'Chuteira', 'Apito'],
-        },
-        {
-            'question': 'Escolha um objeto:',
-            'options': ['Bicicleta', 'Patins', 'Skate', 'Patinete'],
-        },
-    ]
 
 
 class Subsession(BaseSubsession):
@@ -77,12 +37,30 @@ class Player(BasePlayer):
     submission_status = models.StringField(blank=True)
     response_time = models.FloatField(min=0, blank=True)
     consensus_reached = models.BooleanField(initial=False)
+    
+
 
 def group_size(subsession):
     return subsession.session.config["group_size"]
 
+
+def round_time(subsession):
+    return subsession.session.config["round_time"]
+
+
+def questions(player):
+    categoria = player.participant.vars.get("categoria", "Objetos")
+
+    if categoria == "Objetos":
+        return OBJETOS
+    elif categoria == "Dilemas":
+        return DILEMAS
+
+    return OBJETOS
+
+
 def current_question(player: Player):
-    return C.QUESTIONS[player.round_number - 1]
+    return questions(player)[player.round_number - 1]
 
 
 def normalize_group_code(value):
@@ -93,17 +71,29 @@ def group_by_arrival_time_method(subsession: Subsession, waiting_players):
     
     """Forma um grupo assim que houver participantes suficientes com o mesmo código"""
 
-    players_by_code = {}
+    players_by_key = {}
 
     for p in waiting_players:
         code = normalize_group_code(
             p.participant.vars.get("group_code", "")
         )
 
-        if not code:
+        categoria = p.participant.vars.get("categoria", "")
+
+        if not code or not categoria:
             continue
 
-        players_by_code.setdefault(code, []).append(p)
+        key = (code, categoria)
+
+        players_by_key.setdefault(key, []).append(p)
+
+    size = group_size(subsession)
+
+    for key, players in players_by_key.items():
+        if len(players) >= size:
+            return players[:size]
+
+    return None
 
     size = group_size(subsession)
 
@@ -116,7 +106,7 @@ def group_by_arrival_time_method(subsession: Subsession, waiting_players):
 def start_round(group: Group):
     now = time.time()
     group.round_start_timestamp = now
-    group.round_deadline_timestamp = now + C.ROUND_TIME_SECONDS
+    group.round_deadline_timestamp = now + round_time(group.subsession)
 
 
 def set_results(group: Group):
@@ -141,7 +131,7 @@ class GroupFormationWait(WaitPage):
     group_by_arrival_time = True
 
     body_text = (
-        "Aguardando mais participantes com o mesmo código."
+        "Aguardando mais participantes com o mesmo código e mesma categoria."
     )
 
     @staticmethod
@@ -179,7 +169,7 @@ class Question(Page):
     def get_timeout_seconds(player: Player):
         deadline = player.group.round_deadline_timestamp
         if not deadline:
-            return C.ROUND_TIME_SECONDS
+            return round_time(player.subsession)
         return max(1, deadline - time.time())
 
     @staticmethod
@@ -208,7 +198,10 @@ class Question(Page):
             player.submission_status = 'timeout'
 
         elapsed = time.time() - player.group.round_start_timestamp
-        player.response_time = min(max(elapsed, 0), C.ROUND_TIME_SECONDS)
+        player.response_time = min(
+            max(elapsed, 0),
+            round_time(player.subsession),
+        )
 
 
 class WaitForGroup(WaitPage):
@@ -229,7 +222,7 @@ def group_export_rows(player: Player):
                 'grupo_otree': group_in_round.id_in_subsession,
                 'posicao_no_grupo': p.id_in_group,
                 'rodada': round_number,
-                'categoria': 'Objetos',
+                'categoria': player.participant.vars.get('categoria', ''),
                 'pergunta': p.question_text or '',
                 'resposta': p.choice or '',
                 'houve_consenso': 'Sim' if group_in_round.consensus_reached else 'Não',

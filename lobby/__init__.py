@@ -21,6 +21,10 @@ class Player(BasePlayer):
     group_code = models.StringField(
         label="Código do grupo"
     )
+    categoria = models.StringField(
+        label="Categoria",
+        choices=["Objetos", "Dilemas"],
+    )
 
 
 def normalize_group_code(value):
@@ -29,7 +33,10 @@ def normalize_group_code(value):
 
 class EnterGroupCode(Page):
     form_model = "player"
-    form_fields = ["group_code"]
+    form_fields = [
+        "group_code",
+        "categoria",
+    ]
 
     @staticmethod
     def error_message(player, values):
@@ -46,6 +53,7 @@ class EnterGroupCode(Page):
         code = normalize_group_code(player.group_code)
         player.group_code = code
         player.participant.vars["group_code"] = code
+        player.participant.vars["categoria"] = player.categoria
 
 
 page_sequence = [EnterGroupCode]

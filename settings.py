@@ -3,12 +3,13 @@ from os import environ
 
 SESSION_CONFIGS = [
     dict(
-        name='fast_consensus_min_v2',
-        display_name='Fast Consensus',
-        app_sequence=['lobby', 'fast_consensus_min_v2'],
-        num_demo_participants=3,
-        group_size=3
-    ),
+    name='fast_consensus_min_v2',
+    display_name='Fast Consensus',
+    app_sequence=['lobby', 'fast_consensus_min_v2'],
+    num_demo_participants=3,
+    group_size=3,
+    round_time=30,
+),
 
     dict(
         name='public_goods_testes',
